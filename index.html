@@ -498,6 +498,45 @@
       opacity: 0.75;
     }
 
+    /* === STATE AKTIF (tapped di mobile / hover di desktop) === */
+    .photo-tilt-wrapper.tapped .photo-badge {
+      opacity: 1;
+      transform: scale(1) translateY(0);
+    }
+
+    .photo-tilt-wrapper.tapped .photo-counter {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+
+    .photo-tilt-wrapper.tapped .photo-box {
+      border-color: var(--coral) !important;
+      box-shadow:
+        0 0 0 1px var(--coral),
+        0 12px 48px rgba(224, 92, 58, 0.25),
+        0 4px 16px rgba(0,0,0,0.12);
+    }
+
+    .photo-tilt-wrapper.tapped .photo-shimmer {
+      opacity: 1;
+      animation: shimmerMove 1.8s ease infinite;
+    }
+
+    /* Hint tap di mobile: pulsing ring */
+    .photo-tap-hint {
+      display: none;
+      position: absolute;
+      bottom: -2.2rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.6rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--fog);
+      white-space: nowrap;
+      animation: blink 2s ease-in-out infinite;
+    }
+
     /* Scroll indicator */
     .scroll-hint {
       position: absolute;
@@ -1329,9 +1368,20 @@
         margin: 2rem auto 0;
       }
 
-      /* Sembunyikan floating badges di mobile (terlalu penuh) */
+      /* Di mobile: badges tetap ada tapi trigger via .tapped */
       .photo-badge {
-        display: none;
+        display: inline-flex; /* tampilkan, tapi hidden via opacity */
+      }
+
+      /* Badges di mobile posisinya sedikit berbeda agar tidak kepotong */
+      .photo-badge.b-left  { left: -0.5rem; }
+      .photo-badge.b-right { right: -0.5rem; }
+      .photo-badge.b-top   { top: -0.5rem; right: 0.5rem; }
+      .photo-badge.b-bottom { bottom: 4.2rem; right: -0.5rem; }
+
+      /* Tampilkan hint tap */
+      .photo-tap-hint {
+        display: block;
       }
 
       /* photo-box aspect ratio lebih compact */
@@ -1585,6 +1635,8 @@
               <div class="photo-badge b-right"><img src="assets/images/VSCode.png" alt="VS Code"> VS Code</div>
               <div class="photo-badge b-bottom"><img src="assets/images/Canva.png" alt="Canva"> Canva</div>
               <div class="photo-badge b-left"><img src="assets/images/antigravity.png" alt="Antigravity"> AI</div>
+              <!-- Hint tap untuk mobile -->
+              <div class="photo-tap-hint">✦ tap foto ✦</div>
             </div>
           </div>
         </div>
@@ -2479,19 +2531,63 @@
     const isTouchDevice = window.matchMedia('(hover: none)').matches;
 
     if (isTouchDevice) {
-      // Nonaktifkan 3D tilt di touchscreen
+      // ── Tap foto profil → toggle semua efek interaktif ──
       const photoWrapper = document.getElementById('photoTiltWrapper');
       if (photoWrapper) {
-        photoWrapper.style.pointerEvents = 'none';
+        photoWrapper.addEventListener('click', () => {
+          photoWrapper.classList.toggle('tapped');
+        });
+
+        // Tap di luar foto → hapus state tapped
+        document.addEventListener('click', (e) => {
+          if (!photoWrapper.contains(e.target)) {
+            photoWrapper.classList.remove('tapped');
+          }
+        });
+      }
+
+      // ── Gyroscope: foto miring mengikuti kemiringan HP ──
+      const photoBox = document.getElementById('photoBox');
+      if (photoBox && window.DeviceOrientationEvent) {
+        const GYRO_MAX = 12; // derajat max
+        let gyroEnabled = false;
+
+        function enableGyro() {
+          window.addEventListener('deviceorientation', (e) => {
+            if (!gyroEnabled) return;
+            // gamma = kemiringan kiri-kanan (-90 to 90)
+            // beta  = kemiringan depan-belakang (-180 to 180)
+            const gamma = Math.max(-45, Math.min(45, e.gamma || 0));
+            const beta  = Math.max(-45, Math.min(45, (e.beta  || 0) - 30)); // offset 30° untuk posisi normal pegang HP
+            const rotY  =  (gamma / 45) * GYRO_MAX;
+            const rotX  = -(beta  / 45) * GYRO_MAX;
+            photoBox.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg) scale3d(1.02,1.02,1.02)`;
+            photoBox.style.transition = 'transform 0.15s linear';
+          });
+          gyroEnabled = true;
+        }
+
+        // iOS 13+ butuh permission
+        if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+          // Minta permission saat foto di-tap pertama kali
+          if (photoWrapper) {
+            photoWrapper.addEventListener('click', () => {
+              DeviceOrientationEvent.requestPermission()
+                .then(state => { if (state === 'granted') enableGyro(); })
+                .catch(() => {});
+            }, { once: true });
+          }
+        } else {
+          // Android & iOS < 13: langsung aktif
+          enableGyro();
+        }
       }
 
       // Tap work card untuk toggle overlay
       document.querySelectorAll('.work-card').forEach(card => {
         card.addEventListener('click', () => {
           const isOpen = card.classList.contains('tapped');
-          // Tutup semua card lain
           document.querySelectorAll('.work-card.tapped').forEach(c => c.classList.remove('tapped'));
-          // Toggle card yang di-tap
           if (!isOpen) card.classList.add('tapped');
         });
       });
