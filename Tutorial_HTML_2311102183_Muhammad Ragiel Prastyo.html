@@ -1285,6 +1285,219 @@
         display: none;
       }
     }
+
+    /* =============================================
+       MOBILE RESPONSIVE — ≤ 768px
+       ============================================= */
+    @media (max-width: 768px) {
+
+      /* --- HERO --- */
+      #hero {
+        padding: 7rem 0 4rem;
+        text-align: center;
+      }
+
+      .hero-bg-text {
+        font-size: clamp(5rem, 40vw, 10rem);
+        right: -5%;
+        opacity: 0.4;
+      }
+
+      .hero-pill {
+        margin-bottom: 1.2rem;
+      }
+
+      .hero-name {
+        font-size: clamp(3rem, 18vw, 6rem);
+        line-height: 0.92;
+      }
+
+      .hero-tagline {
+        max-width: 100%;
+        font-size: 0.95rem;
+        margin: 0 auto;
+      }
+
+      .role-badges {
+        justify-content: center;
+        margin-top: 1.4rem;
+      }
+
+      /* Foto profil di mobile: lebih kecil & centered */
+      .hero-photo-frame {
+        max-width: 260px;
+        margin: 2rem auto 0;
+      }
+
+      /* Sembunyikan floating badges di mobile (terlalu penuh) */
+      .photo-badge {
+        display: none;
+      }
+
+      /* photo-box aspect ratio lebih compact */
+      .photo-box {
+        aspect-ratio: 3/4;
+      }
+
+      /* Scroll hint */
+      .scroll-hint {
+        bottom: 1rem;
+      }
+
+      /* --- SECTION UMUM --- */
+      .section {
+        padding: 4rem 0;
+      }
+
+      .sec-title {
+        font-size: clamp(2rem, 10vw, 3rem);
+      }
+
+      /* --- ABOUT --- */
+      .about-number {
+        font-size: 4.5rem;
+      }
+
+      .about-body {
+        font-size: 1rem;
+      }
+
+      /* --- SKILLS --- */
+      .skill-bar-wrap {
+        margin: 0 0.8rem;
+      }
+
+      .skill-name {
+        font-size: 0.88rem;
+      }
+
+      .skill-pct-label {
+        font-size: 0.9rem;
+        min-width: 2.2rem;
+      }
+
+      /* --- PORTFOLIO FILTER --- */
+      .filter-tabs {
+        justify-content: flex-start;
+        gap: 0.3rem;
+      }
+
+      .filter-tab {
+        font-size: 0.7rem;
+        padding: 0.35rem 0.8rem;
+      }
+
+      /* Work overlay: selalu terlihat di mobile (tidak ada hover) */
+      .work-overlay {
+        opacity: 0;
+      }
+
+      /* Tinggi thumbnail lebih kecil di mobile */
+      .work-thumb-lg {
+        height: 220px;
+      }
+
+      /* Work card full: stack vertikal di mobile */
+      .work-card-full .row {
+        flex-direction: column;
+      }
+
+      .work-card-full .col-md-6 {
+        width: 100%;
+      }
+
+      /* --- QUOTE SECTION --- */
+      #quote-section {
+        padding: 3rem 0;
+      }
+
+      .quote-num {
+        font-size: 5rem;
+      }
+
+      /* --- CONTACT --- */
+      .contact-big {
+        font-size: clamp(2.5rem, 12vw, 4rem);
+        margin-bottom: 1.5rem;
+      }
+
+      /* --- FOOTER --- */
+      footer .container {
+        flex-direction: column;
+        text-align: center;
+        gap: 0.5rem;
+      }
+
+      /* --- TOOL CHIPS: biarkan wrap rapi --- */
+      .tool-chip {
+        font-size: 0.72rem;
+        padding: 0.4rem 0.8rem;
+        margin: 0.15rem;
+      }
+    }
+
+    /* =============================================
+       MOBILE SMALL — ≤ 480px
+       ============================================= */
+    @media (max-width: 480px) {
+      .hero-name {
+        font-size: clamp(2.6rem, 16vw, 5rem);
+      }
+
+      .hero-photo-frame {
+        max-width: 220px;
+      }
+
+      /* About stats: 2 kolom tetap tapi angka lebih kecil */
+      .about-number {
+        font-size: 3.5rem;
+      }
+
+      /* Skill bar label kecil */
+      .skill-pct-label {
+        display: none;
+      }
+
+      .skill-bar-wrap {
+        margin: 0 0.5rem 0 0.5rem;
+      }
+
+      /* Quote besar dikecilkan */
+      .quote-num {
+        font-size: 4rem;
+      }
+
+      /* Contact heading */
+      .contact-big {
+        font-size: clamp(2rem, 14vw, 3rem);
+      }
+
+      /* Padding section lebih compact */
+      .section {
+        padding: 3rem 0;
+      }
+
+      /* Navbar logo sedikit lebih kecil */
+      .nav-logo {
+        font-size: 1.3rem;
+      }
+    }
+
+    /* =============================================
+       MOBILE: Overlay work card — tap untuk lihat
+       ============================================= */
+    @media (hover: none) {
+      /* Di mobile, tap card untuk toggle overlay */
+      .work-card.tapped .work-overlay {
+        opacity: 1;
+      }
+
+      /* Hover transform dimatikan di touchscreen */
+      .work-card:hover {
+        transform: none;
+      }
+    }
+
   </style>
 </head>
 
@@ -2258,6 +2471,31 @@
 
     // Panggil saat halaman dimuat
     fetchQuote();
+
+
+    /* =============================================
+       8. MOBILE — TAP TO REVEAL WORK OVERLAY
+       ============================================= */
+    const isTouchDevice = window.matchMedia('(hover: none)').matches;
+
+    if (isTouchDevice) {
+      // Nonaktifkan 3D tilt di touchscreen
+      const photoWrapper = document.getElementById('photoTiltWrapper');
+      if (photoWrapper) {
+        photoWrapper.style.pointerEvents = 'none';
+      }
+
+      // Tap work card untuk toggle overlay
+      document.querySelectorAll('.work-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const isOpen = card.classList.contains('tapped');
+          // Tutup semua card lain
+          document.querySelectorAll('.work-card.tapped').forEach(c => c.classList.remove('tapped'));
+          // Toggle card yang di-tap
+          if (!isOpen) card.classList.add('tapped');
+        });
+      });
+    }
 
   </script>
 
